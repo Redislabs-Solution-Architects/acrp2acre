@@ -26,16 +26,16 @@ premium_redis_instances = [instance for instance in redis_instances if instance.
 metrics_to_retrieve = [
     # "cachehits",
     # "cachemisses",
-    "cacheRead",
+    #"cacheRead",
     # "cacheWrite",
     # "connectedclients",
     # "evictedkeys",
     # "expiredkeys",
     # "getcommands",
     # "setcommands",
-    # "totalcommandsprocessed",
+     "totalcommandsprocessed",
     # "totalkeys",
-    # "usedmemory",
+     "usedmemory",
     # "usedmemoryRss",
     # "serverLoad"
 ]
@@ -47,8 +47,8 @@ def get_redis_monitor_metrics(resource_id, metric_names, start_time, end_time):
         metricnames=','.join(metric_names),
         timespan=f"{start_time}/{end_time}",
         #TODO: What interval is appropriate for each metric?
-        interval='P1D',
-        aggregation='Maximum'
+        interval='PT1H',
+        aggregation='Maximum,Average'
     )
 
     metrics = {}
@@ -66,7 +66,7 @@ def get_redis_monitor_metrics(resource_id, metric_names, start_time, end_time):
                 last_data_point = data_points[-1]
                 metrics[metric_name] = {
                     #"total": last_data_point.total,
-                    #"average": last_data_point.average,
+                    "average": last_data_point.average,
                     #"minimum": last_data_point.minimum,
                     "maximum": last_data_point.maximum,
                     #"count": last_data_point.count
