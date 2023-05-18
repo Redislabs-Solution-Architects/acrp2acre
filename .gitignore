@@ -143,4 +143,4 @@ cython_debug/
 
 #local development settings
 *.dev.yml
-AzureStats.xlsx
+*.xlsx
