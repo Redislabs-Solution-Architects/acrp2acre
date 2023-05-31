@@ -26,7 +26,7 @@ az login
 
 #Execute 
 
-python pullAzureCacheForRedisStatus.py
+python pullAzureCacheForRedisStats.py
 ```
 
 The output will be in a file called `AzureStats.xlsx` in the current directory.
