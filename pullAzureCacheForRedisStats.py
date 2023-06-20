@@ -45,7 +45,8 @@ def get_max_average_metrics(mc, resource_id, metrics):
                 for ts in metric.timeseries
                 for metric_value in ts.data
                 if metric_value.average is not None
-            ]
+            ], 
+            default = 0
         )
         for metric in metrics_data.value
     ]
@@ -80,7 +81,8 @@ def get_max_metrics(mc, resource_id, metrics):
                 for ts in metric.timeseries
                 for metric_value in ts.data
                 if metric_value.maximum is not None
-            ]
+            ],
+            default = 0
         )
         for metric in metrics_data.value
     ]
@@ -92,16 +94,25 @@ def get_resource_group(cluster):
 
 
 def process_cluster(cluster, mc):
+
+    # replicas per master is not reported by api for basic and standard tiers amd for premium with default of one replica
+    replicas_per_master = {
+        'Basic': 0,
+        'Standard' : 1,
+        'Premium': cluster.replicas_per_master or 1
+    }[cluster.sku.name]
+
     non_metrics = [
         get_resource_group(cluster),
         cluster.name,
         cluster.sku.name,
-        cluster.replicas_per_master,
-        cluster.shard_count
+        replicas_per_master,
+        cluster.shard_count or 1 # api returns empty string if shard count is 1
     ]
-    total_metrics = round(get_max_average_metrics(mc, cluster.id, "operationspersecond"), 0)
+    total_metrics = round(get_max_average_metrics(mc, cluster.id, "operationspersecond0,operationspersecond1"), 0)
     memory_metrics = round(get_max_metrics(mc, cluster.id, "usedmemory") / 1024 / 1024, 2) #bytes to megabytes
-    return non_metrics + [total_metrics, memory_metrics]
+    connection_metrics = get_max_metrics(mc, cluster.id, "connectedclients")
+    return non_metrics + [total_metrics, memory_metrics, connection_metrics]
 
 
 def get_subscription_info(credential):
@@ -135,8 +146,9 @@ def main():
                                         "SKU",
                                         "Replicas per Master",
                                         "Shard Count",
-                                        "Ops/Sec",
-                                        "Used Memory (MB)"])
+                                        "Avg Ops/Sec",
+                                        "Used Memory (MB)",
+                                        "Max Total Connections"])
 
     with (pd.ExcelWriter(output_file_path, engine='xlsxwriter')) as writer:
         df.to_excel(writer, 'ClusterData', index=False)
