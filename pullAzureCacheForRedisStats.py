@@ -102,17 +102,25 @@ def process_cluster(cluster, mc):
         'Premium': cluster.replicas_per_master or 1
     }[cluster.sku.name]
 
+    cluster_shard_count = cluster.shard_count or 1 # api returns empty string if shard count is 1
+
     non_metrics = [
         get_resource_group(cluster),
         cluster.name,
         cluster.sku.name,
         replicas_per_master,
-        cluster.shard_count or 1 # api returns empty string if shard count is 1
+        cluster_shard_count
     ]
-    total_metrics = round(get_max_average_metrics(mc, cluster.id, "operationspersecond0,operationspersecond1"), 0)
-    memory_metrics = round(get_max_metrics(mc, cluster.id, "usedmemory") / 1024 / 1024, 2) #bytes to megabytes
-    connection_metrics = get_max_metrics(mc, cluster.id, "connectedclients")
-    return non_metrics + [total_metrics, memory_metrics, connection_metrics]
+
+    cluster_rows = []
+
+    for shard_id in range(cluster_shard_count):
+        shard_ops_metrics = round(get_max_average_metrics(mc, cluster.id, f"operationspersecond{shard_id}"), 0)
+        shard_memory_metrics = round(get_max_metrics(mc, cluster.id, f"usedmemory{shard_id}") / 1024 / 1024, 2) #bytes to megabytes
+        shard_connection_metrics = get_max_metrics(mc, cluster.id, f"connectedclients{shard_id}")
+        cluster_rows.append(non_metrics + [shard_id, shard_ops_metrics, shard_memory_metrics, shard_connection_metrics])
+
+    return cluster_rows
 
 
 def get_subscription_info(credential):
@@ -137,14 +145,17 @@ def main():
     output_file_path = Path(args.outDir) / "AzureStats.xlsx"
 
     azure_credential = DefaultAzureCredential()
-    metrics = [[sub_info[0]] + process_cluster(cluster, sub_info[1])
+    metrics = [[sub_info[0]] + shard_stats
                for sub_info in get_subscription_info(azure_credential)
-               for cluster in list_clusters(azure_credential, sub_info[0])]
+               for cluster in list_clusters(azure_credential, sub_info[0])
+               for shard_stats in process_cluster(cluster, sub_info[1])]
+
     df = pd.DataFrame(metrics, columns=["Subscription ID",
                                         "Resource Group",
                                         "DB Name",
                                         "SKU",
                                         "Replicas per Master",
+                                        "Total Shards",
                                         "Shard Count",
                                         "Avg Ops/Sec",
                                         "Used Memory (MB)",
