@@ -155,7 +155,7 @@ def main():
                                         "DB Name",
                                         "SKU",
                                         "Replicas per Master",
-                                        "Shard Countst",
+                                        "Shard Count",
                                         "Shard Number",
                                         "Avg Ops/Sec",
                                         "Used Memory (MB)",
