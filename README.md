@@ -4,8 +4,9 @@ This is a stand-alone version of a script (`pullAzureCacheForRedisStats.py`) for
 
 # Assumptions
 We assume you have [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) installed.
+Python 3.8 or greater is required.
 
-### Running from source
+### Running from source (Windows)
 
 ```
 # Clone:
@@ -31,6 +32,27 @@ python pullAzureCacheForRedisStats.py
 
 The output will be in a file called `AzureStats.xlsx` in the current directory.
 
-### Docker
-Under construction
+### Running from source (Linux)
+```
+# Clone:
+git clone https://github.com/kkrueger/acrp2acre
+
+# Prepare virtualenv:
+cd acrp2acre
+python3 -m venv .env
+
+# Activate virtualenv
+source .env/bin/activate
+
+# Install necessary libraries
+pip install -r requirements.txt
+
+# Log in to your Azure account
+az login
+
+#Execute 
+
+python pullAzureCacheForRedisStats.py
+```
+
 
