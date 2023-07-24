@@ -10,7 +10,7 @@ Python 3.8 or greater is required.
 
 ```
 # Clone:
-git clone https://github.com/kkrueger/acrp2acre
+git clone https://github.com/Redislabs-Solution-Architects/acrp2acre.git
 
 # Prepare virtualenv:
 cd acrp2acre
@@ -35,7 +35,7 @@ The output will be in a file called `AzureStats.xlsx` in the current directory.
 ### Running from source (Linux)
 ```
 # Clone:
-git clone https://github.com/kkrueger/acrp2acre
+git clone https://github.com/Redislabs-Solution-Architects/acrp2acre.git
 
 # Prepare virtualenv:
 cd acrp2acre
@@ -45,14 +45,14 @@ python3 -m venv .env
 source .env/bin/activate
 
 # Install necessary libraries
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
 # Log in to your Azure account
 az login
 
 #Execute 
 
-python pullAzureCacheForRedisStats.py
+python3 pullAzureCacheForRedisStats.py
 ```
 
 
