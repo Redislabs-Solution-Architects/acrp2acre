@@ -39,10 +39,10 @@ git clone https://github.com/Redislabs-Solution-Architects/acrp2acre.git
 
 # Prepare virtualenv:
 cd acrp2acre
-python3 -m venv .env
+python3 -m venv .venv
 
 # Activate virtualenv
-source .env/bin/activate
+source .venv/bin/activate
 
 # Install necessary libraries
 pip3 install -r requirements.txt
@@ -54,5 +54,3 @@ az login
 
 python3 pullAzureCacheForRedisStats.py
 ```
-
-
