@@ -145,6 +145,7 @@ def main():
     output_file_path = Path(args.outDir) / "AzureStats.xlsx"
 
     azure_credential = DefaultAzureCredential()
+    
     metrics = [[sub_info[0]] + shard_stats
                for sub_info in get_subscription_info(azure_credential)
                for cluster in list_clusters(azure_credential, sub_info[0])
