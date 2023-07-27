@@ -94,8 +94,8 @@ def get_resource_group(cluster):
 
 
 def process_cluster(cluster, mc):
-
-    # replicas per master is not reported by api for basic and standard tiers amd for premium with default of one replica
+    print(".", end="")
+    # replicas per master is not reported by api for basic and standard tiers and for premium with default of one replica
     replicas_per_master = {
         'Basic': 0,
         'Standard' : 1,
@@ -120,10 +120,13 @@ def process_cluster(cluster, mc):
         shard_connection_metrics = get_max_metrics(mc, cluster.id, f"connectedclients{shard_id}")
         cluster_rows.append(non_metrics + [shard_id, shard_ops_metrics, shard_memory_metrics, shard_connection_metrics])
 
+    print("")
+
     return cluster_rows
 
 
 def get_subscription_info(credential):
+    print("Gathering subscription information...")
     return [[sub.subscription_id, MonitorManagementClient(
             credential=credential,
             subscription_id=sub.subscription_id
@@ -133,6 +136,7 @@ def get_subscription_info(credential):
 
 
 def list_clusters(credential, subscription_id):
+    print(f"Gathering cluster information for subscription {subscription_id}")
     return RedisManagementClient(credential, subscription_id).redis.list()
 
 
