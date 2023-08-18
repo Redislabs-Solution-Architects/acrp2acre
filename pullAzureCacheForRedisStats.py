@@ -107,7 +107,8 @@ def process_cluster(cluster, mc):
     non_metrics = [
         get_resource_group(cluster),
         cluster.name,
-        f"{cluster.sku.family}{cluster.sku.capacity} {cluster.sku.name}",
+        f"{cluster.sku.family}{cluster.sku.capacity}",
+        f"{cluster.sku.name}",
         replicas_per_master,
         cluster_shard_count
     ]
@@ -156,7 +157,8 @@ def main():
     df = pd.DataFrame(metrics, columns=["Subscription ID",
                                         "Resource Group",
                                         "DB Name",
-                                        "SKU",
+                                        "SKU Capacity",
+                                        "SKU Name",
                                         "Replicas per Master",
                                         "Shard Count",
                                         "Shard Number",
