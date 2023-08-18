@@ -107,7 +107,7 @@ def process_cluster(cluster, mc):
     non_metrics = [
         get_resource_group(cluster),
         cluster.name,
-        cluster.sku.name,
+        f"{cluster.sku.family}{cluster.sku.capacity} {cluster.sku.name}",
         replicas_per_master,
         cluster_shard_count
     ]
@@ -118,9 +118,7 @@ def process_cluster(cluster, mc):
         shard_ops_metrics = round(get_max_average_metrics(mc, cluster.id, f"operationspersecond{shard_id}"), 0)
         shard_memory_metrics = round(get_max_metrics(mc, cluster.id, f"usedmemory{shard_id}") / 1024 / 1024, 2) #bytes to megabytes
         shard_connection_metrics = get_max_metrics(mc, cluster.id, f"connectedclients{shard_id}")
-        cluster_rows.append(non_metrics + [shard_id, shard_ops_metrics, shard_memory_metrics, shard_connection_metrics])
-
-    print("")
+        cluster_rows.append(non_metrics + [shard_id, shard_ops_metrics, shard_memory_metrics, shard_connection_metrics])    
 
     return cluster_rows
 
@@ -169,7 +167,7 @@ def main():
     with (pd.ExcelWriter(output_file_path, engine='xlsxwriter')) as writer:
         df.to_excel(writer, 'ClusterData', index=False)
 
-    print("Results are in {}".format(output_file_path))
+    print("\r\nResults are in {}".format(output_file_path))
 
 
 if __name__ == "__main__":
