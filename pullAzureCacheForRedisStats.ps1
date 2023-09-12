@@ -3,14 +3,14 @@
 
 
 # Authenticate to your Azure account (you might need to log in)
-Connect-AzAccount
+Connect-AzAccount 
 
 # Get a list of all Azure subscriptions
 $subscriptions = Get-AzSubscription
 
 # Iterate through each subscription
 foreach ($subscription in $subscriptions) {
-    Set-AzContext -Subscription $subscription | Out-Null
+    Set-AzContext -Subscription $subscription
 
     # Get all Azure Cache for Redis instances in the current subscription
     $redisInstances = Get-AzRedisCache
@@ -29,4 +29,4 @@ foreach ($subscription in $subscriptions) {
 }
 
 # Disconnect from your Azure account
-Disconnect-AzAccount
+Disconnect-AzAccount | Out-Null
