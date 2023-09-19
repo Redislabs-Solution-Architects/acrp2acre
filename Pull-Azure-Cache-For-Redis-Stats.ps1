@@ -1,19 +1,17 @@
 # The Azure PowerShell Az module is required.
 # See https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell?view=azps-10.3.0 for installation instructions
 
-#TODO: Should we test this on Windows PS 5.1?
-
-# Aggregate stats over one hour for the last seven days
-$metric_collection_period_days = 7
-$metric_aggregation_period = "01:00:00"
-$output_file_name = "AzureStats.csv"
+# Static config
+$METRIC_COLLECTION_PERIOD_DAYS = 7 # Look at last seven days of metrics when calculating statistics
+$METRIC_AGGREGATION_PERIOD = "01:00:00" # When aggregating metrics, use a one hour time window
+$OUTPUT_FILE_NAME = "AzureStats.csv" #TODO: Allow output path/filename to be passed in from command-line
 
 # Get the maximum average over the collection period
 function Get-Max-Average-Metric ($ResourceId, $MetricName) {
 
-    $start_date = (Get-Date).Date.AddDays(1).AddDays(-$metric_collection_period_days)
+    $start_date = (Get-Date).Date.AddDays(1).AddDays(-$METRIC_COLLECTION_PERIOD_DAYS)
     $metrics = (
-        Get-AzMetric -TimeGrain $metric_aggregation_period -ResourceId $ResourceId -MetricName $MetricName -StartTime $start_date `
+        Get-AzMetric -TimeGrain $METRIC_AGGREGATION_PERIOD -ResourceId $ResourceId -MetricName $MetricName -StartTime $start_date `
          -AggregationType Average -WarningAction:SilentlyContinue
     ).Timeseries
 
@@ -28,9 +26,9 @@ function Get-Max-Average-Metric ($ResourceId, $MetricName) {
 # Get the absolute maximum over the collection period
 function Get-Max-Metric ($ResourceId, $MetricName) {
 
-    $start_date = (Get-Date).Date.AddDays(1).AddDays(-$metric_collection_period_days)
+    $start_date = (Get-Date).Date.AddDays(1).AddDays(-$METRIC_COLLECTION_PERIOD_DAYS)
     $metrics = (
-        Get-AzMetric -TimeGrain $metric_aggregation_period -ResourceId $ResourceId -MetricName $MetricName -StartTime $start_date `
+        Get-AzMetric -TimeGrain $METRIC_AGGREGATION_PERIOD -ResourceId $ResourceId -MetricName $MetricName -StartTime $start_date `
          -AggregationType Maximum -WarningAction:SilentlyContinue
     ).Timeseries
 
@@ -69,7 +67,7 @@ foreach ($subscription in $subscriptions) {
 
 $clusterRows = New-Object System.Collections.ArrayList
 
-# Gather statistice for each instance
+# Gather statistics for each instance
 foreach ($instance in $redisInstances) {
 
     Write-Host "." -NoNewline
@@ -100,14 +98,14 @@ foreach ($instance in $redisInstances) {
             "Used Memory (MB)" = $usedMemory;
             "Max Total Connections" = $connectedClients;  
         }        
-        $clusterRows.Add($clusterRow) | Out-Null
+        $clusterRows.Add([PSCustomObject]$clusterRow) | Out-Null # Cast to PSCustomObject is required for compatibility with Windows PowerShell 5.1
     }
 }
 
 # Disconnect from your Azure account
-$null = Disconnect-AzAccount
+Disconnect-AzAccount
 
 # Write to CSV
-$clusterRows | Export-Csv $output_file_name
+$clusterRows | Export-Csv $OUTPUT_FILE_NAME -NoTypeInformation
 
-Write-Host "`nResults are in $($output_file_name)"
+Write-Host "`nResults are in $($OUTPUT_FILE_NAME)"
