@@ -143,4 +143,7 @@ cython_debug/
 
 #local development settings
 *.dev.yml
+
+#script output
 *.xlsx
+*.csv
