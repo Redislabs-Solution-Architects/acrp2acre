@@ -56,12 +56,14 @@ foreach ($subscription in $subscriptions) {
 
     Write-Host "Gathering cluster information for subscription $($subscription.Id)"
 
+    # Get all Azure Cache for Redis instances in the current subscription
     $subscriptionRedisInstances = Get-AzRedisCache
 
+    # Attach the subscription ID to each redis instance object, so we can include it in the output
     $subscriptionRedisInstances | ForEach-Object {
         $_ | Add-Member -MemberType NoteProperty -Name "SubscriptionID" -Value $subscription.SubscriptionId | Out-Null
     }    
-    # Get all Azure Cache for Redis instances in the current subscription
+    
     $redisInstances.AddRange($subscriptionRedisInstances)
 }
 
@@ -103,7 +105,7 @@ foreach ($instance in $redisInstances) {
 }
 
 # Disconnect from your Azure account
-Disconnect-AzAccount
+Disconnect-AzAccount | Out-Null
 
 # Write to CSV
 $clusterRows | Export-Csv $OUTPUT_FILE_NAME -NoTypeInformation
