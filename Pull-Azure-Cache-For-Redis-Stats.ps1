@@ -43,8 +43,13 @@ function Get-Max-Metric ($ResourceId, $MetricName) {
 
 function Get-Extended-Information($ResourceId) {
 
-    $replicasPerMaster = 1
-    $skuName = ""
+    $replicasPerMasterTable = @{
+        "Basic"    = 0
+        "Standard" = 1
+        "Premium"  = 1  # Set a default value if cluster.replicas_per_master is null or missing
+    }
+
+    $skuCapacity = ""
     $resourceGroupName = ""
     $cache = $null
     $apiVersion = "2023-05-01-preview"
@@ -57,15 +62,17 @@ function Get-Extended-Information($ResourceId) {
 
         if ($null -ne $cache -and $null -ne $cache.Properties -and $null -ne $cache.Properties.replicasPerMaster) {
             $replicasPerMaster = $cache.Properties.replicasPerMaster
+        } else {
+            $replicasPerMaster = $replicasPerMasterTable[$cache.Properties.sku.name]
         } 
 
-        $skuName = $cache.Properties.sku.family + $cache.Properties.sku.capacity
+        $skuCapacity = $cache.Properties.sku.family + $cache.Properties.sku.capacity
         $resourceGroupName = $cache.ResourceGroupName     
     }
  
     return [PSCustomObject]@{
         ReplicasPerMaster = $replicasPerMaster
-        SkuName = $skuName
+        SkuCapacity = $skuCapacity
         ResourceGroupName = $resourceGroupName
     }
 }
@@ -120,7 +127,7 @@ foreach ($instance in $redisInstances) {
             "Subscription ID" = $instance.SubscriptionID; 
             "Resource Group" = $extendedInfo.ResourceGroupName;
             "DB Name" = $instance.Name;
-            "SKU Capacity" = $extendedInfo.SkuName;
+            "SKU Capacity" = $extendedInfo.SkuCapacity;
             "SKU Name" = $instance.Sku;
             "Replicas Per Master" = $extendedInfo.ReplicasPerMaster;
             "Shard Count" = $shardCount;
