@@ -121,7 +121,7 @@ foreach ($instance in $redisInstances) {
             "Subscription ID" = $instance.SubscriptionID; 
             "Resource Group" = $extendedInfo.ResourceGroupName;
             "DB Name" = $instance.Name;
-            "SKU Size" = $instance.Size
+            "SKU Size" = $instance.Size;
             "SKU Capacity" = $extendedInfo.SkuName;
             "SKU Name" = $instance.Sku;
             "Replicas Per Master" = $extendedInfo.ReplicasPerMaster;
