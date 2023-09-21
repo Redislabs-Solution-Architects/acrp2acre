@@ -46,12 +46,14 @@ function Get-Extended-Information($ResourceId) {
     $replicasPerMaster = 0
     $skuName = ""
     $resourceGroupName = ""
+    $cache = $null
+    $apiVersion = "2023-05-01-preview"
     
     if ($ResourceId -eq "" -or $null -eq $ResourceId) {
         Write-Host "ResourceId can't be null in Get-Extended-Information function"
     } else {
         # Get the extended properties of the instance
-        $cache = Get-AzResource -ResourceId $ResourceId -ExpandProperties
+        $cache = Get-AzResource -ResourceId $ResourceId -ExpandProperties -ApiVersion $apiVersion
 
         if ($null -ne $cache -and $null -ne $cache.Properties -and $null -ne $cache.Properties.replicasPerMaster) {
             $replicasPerMaster = $cache.Properties.replicasPerMaster
