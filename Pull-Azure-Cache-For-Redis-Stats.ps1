@@ -43,7 +43,7 @@ function Get-Max-Metric ($ResourceId, $MetricName) {
 
 function Get-Extended-Information($ResourceId) {
 
-    $replicasPerMaster = 0
+    $replicasPerMaster = 1
     $skuName = ""
     $resourceGroupName = ""
     $cache = $null
@@ -108,22 +108,18 @@ foreach ($instance in $redisInstances) {
     } else { 
         $shardCount = $instance.ShardCount 
     }
-    
+    $extendedInfo = Get-Extended-Information $instance.Id
+
     # For each shard, gather statistics and add to array
     0..($shardCount - 1) | ForEach-Object {        
         $opsPerSecond = (Get-Max-Average-Metric $instance.Id "operationspersecond$($_)").ToString("N0")
         $usedMemory = ((Get-Max-Metric $instance.Id "usedmemory$($_)") / 1024 / 1024).ToString("F2") # Convert bytes to megabytes
         $connectedClients = Get-Max-Metric $instance.Id "connectedclients$($_)"
 
-        # TODO: Find a way to get "Replicas Per Master" from Powershell. This is useful information that the Python version collects.
-        $extendedInfo = Get-Extended-Information $instance.Id
-        # TODO: Find a way to get the full instance type (e.g. P5). This is useful information that the Python version collects.
-        
         $clusterRow = [ordered]@{ 
             "Subscription ID" = $instance.SubscriptionID; 
             "Resource Group" = $extendedInfo.ResourceGroupName;
             "DB Name" = $instance.Name;
-            "SKU Size" = $instance.Size;
             "SKU Capacity" = $extendedInfo.SkuName;
             "SKU Name" = $instance.Sku;
             "Replicas Per Master" = $extendedInfo.ReplicasPerMaster;
