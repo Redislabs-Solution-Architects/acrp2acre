@@ -41,6 +41,32 @@ function Get-Max-Metric ($ResourceId, $MetricName) {
     return ($maximums | Measure-Object -Maximum).Maximum
 }
 
+function Get-Extended-Information($ResourceId) {
+
+    $replicasPerMaster = 0
+    $skuName = ""
+    $resourceGroupName = ""
+    
+    if ($ResourceId -eq "" -or $null -eq $ResourceId) {
+        Write-Host "ResourceId can't be null in Get-Extended-Information function"
+    } else {
+        # Get the extended properties of the instance
+        $cache = Get-AzResource -ResourceId $ResourceId -ExpandProperties
+
+        if ($null -ne $cache -and $null -ne $cache.Properties -and $null -ne $cache.Properties.replicasPerMaster) {
+            $replicasPerMaster = $cache.Properties.replicasPerMaster
+        } 
+
+        $skuName = $cache.Properties.sku.family + $cache.Properties.sku.capacity
+        $resourceGroupName = $cache.ResourceGroupName     
+    }
+ 
+    return [PSCustomObject]@{
+        ReplicasPerMaster = $replicasPerMaster
+        SkuName = $skuName
+        ResourceGroupName = $resourceGroupName
+    }
+}
 
 # Authenticate to your Azure account (you might need to log in)
 Connect-AzAccount 
@@ -88,18 +114,24 @@ foreach ($instance in $redisInstances) {
         $connectedClients = Get-Max-Metric $instance.Id "connectedclients$($_)"
 
         # TODO: Find a way to get "Replicas Per Master" from Powershell. This is useful information that the Python version collects.
+        $extendedInfo = Get-Extended-Information $instance.Id
         # TODO: Find a way to get the full instance type (e.g. P5). This is useful information that the Python version collects.
+        
         $clusterRow = [ordered]@{ 
             "Subscription ID" = $instance.SubscriptionID; 
+            "Resource Group" = $extendedInfo.ResourceGroupName;
             "DB Name" = $instance.Name;
-            "SKU Capacity" = $instance.Size;
+            "SKU Size" = $instance.Size
+            "SKU Capacity" = $extendedInfo.SkuName;
             "SKU Name" = $instance.Sku;
+            "Replicas Per Master" = $extendedInfo.ReplicasPerMaster;
             "Shard Count" = $shardCount;
             "Shard Number" = $_;
             "Avg Ops/Sec" = $opsPerSecond;
             "Used Memory (MB)" = $usedMemory;
-            "Max Total Connections" = $connectedClients;  
-        }        
+            "Max Total Connections" = $connectedClients;
+        }
+        
         $clusterRows.Add([PSCustomObject]$clusterRow) | Out-Null # Cast to PSCustomObject is required for compatibility with Windows PowerShell 5.1
     }
 }
