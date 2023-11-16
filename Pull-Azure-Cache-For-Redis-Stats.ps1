@@ -98,8 +98,12 @@ foreach ($subscription in $subscriptions) {
     $subscriptionRedisInstances | ForEach-Object {
         $_ | Add-Member -MemberType NoteProperty -Name "SubscriptionID" -Value $subscription.SubscriptionId | Out-Null
     }    
-    
-    $redisInstances.AddRange($subscriptionRedisInstances)
+
+    if ($null -eq $subscriptionRedisInstances.Id) {
+        Write-Host "No Redis Instances found in subscription: $($subscription.Id)"
+    } else {
+        $redisInstances.AddRange($subscriptionRedisInstances)
+    }
 }
 
 $clusterRows = New-Object System.Collections.ArrayList
@@ -110,7 +114,7 @@ foreach ($instance in $redisInstances) {
     Write-Host "." -NoNewline
     
     # API returns null if shard count is 1, so set to 1
-    If ($null -eq $instance.ShardCount) { 
+    if ($null -eq $instance.ShardCount) { 
         $shardCount = 1
     } else { 
         $shardCount = $instance.ShardCount 
