@@ -68,11 +68,11 @@ See [this page](https://learn.microsoft.com/en-us/powershell/azure/install-azure
 
 This script has been tested on Windows PowerShell 5.1 and PowerShell 7.2
 
-### Support
-
-_Please note that the code contained in this repository is not officially supported or product-approved code._
-
 ### Running
 ```
 .\Pull-Azure-Cache-For-Redis-Stats.ps1
 ```
+
+## Support
+
+_Please note that the code contained in this repository is not officially supported or product-approved code._
