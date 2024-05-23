@@ -83,7 +83,7 @@ Connect-AzAccount
 # Get a list of all Azure subscriptions
 Write-Host "Gathering subscription information..."
 $subscriptions = Get-AzSubscription
-$redisInstances = New-Object System.Collections.ArrayList
+$redisInstances = @()
 
 # Build an array containing all Azure Cache for Redis instances in all subscriptions
 foreach ($subscription in $subscriptions) {
@@ -102,7 +102,7 @@ foreach ($subscription in $subscriptions) {
     if ($null -eq $subscriptionRedisInstances.Id) {
         Write-Host "No Redis Instances found in subscription: $($subscription.Id)"
     } else {
-        $redisInstances.AddRange($subscriptionRedisInstances)
+        $redisInstances += ($subscriptionRedisInstances)
     }
 }
 
