@@ -29,7 +29,7 @@ def get_max_average_metrics(mc, resource_id, metrics):
         metricnames=metrics,
         timespan=timespan,
         interval=AGGREGATION_PERIOD,
-        aggregation="Average")
+        aggregation="Maximum")
 
     # WARNING - if you change the aggregation above then you MUST change the
     # accessor below to its lower case equivalent
@@ -41,10 +41,10 @@ def get_max_average_metrics(mc, resource_id, metrics):
     result = [
         max(
             [
-                metric_value.average
+                metric_value.maximum
                 for ts in metric.timeseries
                 for metric_value in ts.data
-                if metric_value.average is not None
+                if metric_value.maximum is not None
             ], 
             default = 0
         )
