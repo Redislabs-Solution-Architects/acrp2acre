@@ -123,7 +123,7 @@ foreach ($instance in $redisInstances) {
 
     # For each shard, gather statistics and add to array
     0..($shardCount - 1) | ForEach-Object {        
-        $opsPerSecond = (Get-Max-Average-Metric $instance.Id "operationspersecond$($_)").ToString("N0")
+        $opsPerSecond = (Get-Max-Metric $instance.Id "operationspersecond$($_)").ToString("N0")
         $usedMemory = ((Get-Max-Metric $instance.Id "usedmemory$($_)") / 1024 / 1024).ToString("F2") # Convert bytes to megabytes
         $connectedClients = Get-Max-Metric $instance.Id "connectedclients$($_)"
 
