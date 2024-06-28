@@ -106,6 +106,7 @@ def process_cluster(cluster, mc):
 
     non_metrics = [
         get_resource_group(cluster),
+        cluster.location,
         cluster.name,
         f"{cluster.sku.family}{cluster.sku.capacity}",
         f"{cluster.sku.name}",
@@ -156,6 +157,7 @@ def main():
 
     df = pd.DataFrame(metrics, columns=["Subscription ID",
                                         "Resource Group",
+                                        "Region",
                                         "DB Name",
                                         "SKU Capacity",
                                         "SKU Name",
