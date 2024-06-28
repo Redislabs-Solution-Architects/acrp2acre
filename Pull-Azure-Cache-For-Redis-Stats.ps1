@@ -130,6 +130,7 @@ foreach ($instance in $redisInstances) {
         $clusterRow = [ordered]@{ 
             "Subscription ID" = $instance.SubscriptionID; 
             "Resource Group" = $extendedInfo.ResourceGroupName;
+            "Region" = $instance.Location;
             "DB Name" = $instance.Name;
             "SKU Capacity" = $extendedInfo.SkuCapacity;
             "SKU Name" = $instance.Sku;
