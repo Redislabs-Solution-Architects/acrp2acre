@@ -29,7 +29,7 @@ def get_max_average_metrics(mc, resource_id, metrics):
         metricnames=metrics,
         timespan=timespan,
         interval=AGGREGATION_PERIOD,
-        aggregation="Maximum")
+        aggregation="Average")
 
     # WARNING - if you change the aggregation above then you MUST change the
     # accessor below to its lower case equivalent
@@ -41,10 +41,10 @@ def get_max_average_metrics(mc, resource_id, metrics):
     result = [
         max(
             [
-                metric_value.maximum
+                metric_value.average
                 for ts in metric.timeseries
                 for metric_value in ts.data
-                if metric_value.maximum is not None
+                if metric_value.average is not None
             ], 
             default = 0
         )
@@ -116,7 +116,7 @@ def process_cluster(cluster, mc):
     cluster_rows = []
 
     for shard_id in range(cluster_shard_count):
-        shard_ops_metrics = round(get_max_average_metrics(mc, cluster.id, f"operationspersecond{shard_id}"), 0)
+        shard_ops_metrics = round(get_max_metrics(mc, cluster.id, f"operationspersecond{shard_id}"), 0)
         shard_memory_metrics = round(get_max_metrics(mc, cluster.id, f"usedmemory{shard_id}") / 1024 / 1024, 2) #bytes to megabytes
         shard_connection_metrics = get_max_metrics(mc, cluster.id, f"connectedclients{shard_id}")
         cluster_rows.append(non_metrics + [shard_id, shard_ops_metrics, shard_memory_metrics, shard_connection_metrics])    
