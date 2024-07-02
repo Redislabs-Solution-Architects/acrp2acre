@@ -147,3 +147,5 @@ cython_debug/
 #script output
 *.xlsx
 *.csv
+
+.vscode/

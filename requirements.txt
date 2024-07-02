@@ -4,6 +4,7 @@ azure-identity==1.12.0
 azure-mgmt-core==1.4.0
 azure-mgmt-monitor==5.0.1
 azure-mgmt-redis==12.0.0
+azure-mgmt-redisenterprise==3.0.0
 azure-mgmt-subscription==3.1.1
 numpy==1.24.3
 pandas==2.0.1
