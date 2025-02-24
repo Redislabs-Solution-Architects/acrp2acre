@@ -21,7 +21,7 @@ AGGREGATION_PERIOD = "PT1H"
 SECONDS_PER_AGGREGATION_PERIOD = 3600
 
 # Aligned by capacity 2, 4, 6, 8, 10
-clusterInfo = {
+acreClusterInfo = {
     'SKU' : [ 'Enterprise_E1',
              'Enterprise_E5', 'Enterprise_E5', 'Enterprise_E5', 
              'Enterprise_E10', 'Enterprise_E10', 'Enterprise_E10', 'Enterprise_E10', 'Enterprise_E10',
@@ -29,7 +29,8 @@ clusterInfo = {
              'Enterprise_E50', 'Enterprise_E50', 'Enterprise_E50', 'Enterprise_E50', 'Enterprise_E50',
              'Enterprise_E100', 'Enterprise_E100', 'Enterprise_E100', 'Enterprise_E100', 'Enterprise_E100',
              'Enterprise_E200', 'Enterprise_E200', 'Enterprise_E200', 'Enterprise_E200', 'Enterprise_E200',
-             'Enterprise_E400', 'Enterprise_E400', 'Enterprise_E400', 'Enterprise_E400', 'Enterprise_E400'],
+             'Enterprise_E400', 'Enterprise_E400', 'Enterprise_E400', 'Enterprise_E400', 'Enterprise_E400',
+             ],
     'vCPUs' : [ 1,
               2, 4, 6,
               4, 8, 12, 16, 20,
@@ -48,7 +49,16 @@ clusterInfo = {
                      60, 120, 120, 240, 240]
 }
 
-clusterInfoDf = pd.DataFrame(clusterInfo)
+amrClusterInfo = {
+  'SKU' : [
+      'GeneralPurpose_G3', 'GeneralPurpose_G5', 'Balanced_B0', 'Balanced_B1', 'Balanced_B3', 'Balanced_B5', 'Balanced_B10', 'Balanced_B20', 'Balanced_B50', 'Balanced_B100', 'Balanced_B150', 'Balanced_B250', 'Balanced_B350', 'Balanced_B500', 'Balanced_B700', 'Balanced_B100', 
+      'MemoryOptimized_M10', 'MemoryOptimized_M20', 'MemoryOptimized_M50', 'MemoryOptimized_M100', 'MemoryOptimized_M150', 'MemoryOptimized_M250', 'MemoryOptimized_M350', 'MemoryOptimized_M500', 'MemoryOptimized_M700', 'MemoryOptimized_M1000', 'MemoryOptimized_M1500', 'MemoryOptimized_M2000', 
+      'ComputeOptimized_X3', 'ComputeOptimized_X5', 'ComputeOptimized_X10', 'ComputeOptimized_X20' 'ComputeOptimized_X50', 'ComputeOptimized_X100', 'ComputeOptimized_X150', 'ComputeOptimized_X250', 'ComputeOptimized_X350', 'ComputeOptimized_X500', 'ComputeOptimized_X700', 
+      'FlashOptimized_A250', 'FlashOptimized_A500', 'FlashOptimized_A700', 'FlashOptimized_A1000', 'FlashOptimized_A1500', 'FlashOptimized_A2000', 'FlashOptimized_A4500'
+  ]
+}
+
+clusterInfoDf = pd.DataFrame(acreClusterInfo)
 
 def lookup_enterprise_sku_capcity(sku, capacity):
     # Filter based on SKU
@@ -159,7 +169,7 @@ def process_cluster(cluster, mc):
 
     cluster_rows = []
 
-    if cluster.type == 'Microsoft.Cache/redisEnterprise' and not cluster.sku.name.startswith('GeneralPurpose_G3'):
+    if cluster.type == 'Microsoft.Cache/redisEnterprise' and cluster.sku.name not in amrClusterInfo['SKU']:
         cluster_info = lookup_enterprise_sku_capcity(cluster.sku.name, cluster.sku.capacity)
         cluster_shard_count = 1
 
