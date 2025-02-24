@@ -1,11 +1,14 @@
 from azure.identity import DefaultAzureCredential
+from azure.identity import AzureCliCredential
 from azure.mgmt.redis import RedisManagementClient
+from azure.mgmt.redisenterprise import RedisEnterpriseManagementClient
 from azure.mgmt.monitor import MonitorManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 import datetime
 import pandas as pd
 from pathlib import Path
 import argparse
+import os
 
 # The measurement collection period in days.
 METRIC_COLLECTION_PERIOD_DAYS = 7
@@ -16,6 +19,49 @@ AGGREGATION_PERIOD = "PT1H"
 
 # Seconds in the aggregation period
 SECONDS_PER_AGGREGATION_PERIOD = 3600
+
+# Aligned by capacity 2, 4, 6, 8, 10
+clusterInfo = {
+    'SKU' : [ 'Enterprise_E1',
+             'Enterprise_E5', 'Enterprise_E5', 'Enterprise_E5', 
+             'Enterprise_E10', 'Enterprise_E10', 'Enterprise_E10', 'Enterprise_E10', 'Enterprise_E10',
+             'Enterprise_E20', 'Enterprise_E20', 'Enterprise_E20', 'Enterprise_E20', 'Enterprise_E20',
+             'Enterprise_E50', 'Enterprise_E50', 'Enterprise_E50', 'Enterprise_E50', 'Enterprise_E50',
+             'Enterprise_E100', 'Enterprise_E100', 'Enterprise_E100', 'Enterprise_E100', 'Enterprise_E100',
+             'Enterprise_E200', 'Enterprise_E200', 'Enterprise_E200', 'Enterprise_E200', 'Enterprise_E200',
+             'Enterprise_E400', 'Enterprise_E400', 'Enterprise_E400', 'Enterprise_E400', 'Enterprise_E400'],
+    'vCPUs' : [ 1,
+              2, 4, 6,
+              4, 8, 12, 16, 20,
+              4, 8, 12, 16, 20,
+              8, 16, 24, 32, 40,
+              16, 32, 48, 64, 80,
+              32, 64, 96, 128, 160,
+              64, 128, 192, 256, 320],
+    'MasterShards': [1,
+                     1, 2, 6,
+                     2, 6, 6, 30, 30,
+                     2, 6, 6, 30, 30,
+                     6, 6, 6, 30, 30,
+                     6, 30, 30, 30, 30,
+                     30, 60, 60, 120, 120,
+                     60, 120, 120, 240, 240]
+}
+
+clusterInfoDf = pd.DataFrame(clusterInfo)
+
+def lookup_enterprise_sku_capcity(sku, capacity):
+    # Filter based on SKU
+    sku_data = clusterInfoDf[clusterInfoDf['SKU']==sku]
+    capacity_index = capacity//2 - 1
+
+    # Check if the capcity is within the range of the filtered DF
+    if capacity_index < len(sku_data):
+            vcpus = sku_data.iloc[capacity_index]['vCPUs']
+            mastershard_count = sku_data.iloc[capacity_index]['MasterShards']
+            return {'VCPUs': vcpus, 'MasterShards':  mastershard_count}
+    else:
+        return 'Invalid capcity index'
 
 def get_max_average_metrics(mc, resource_id, metrics):
     '''
@@ -95,32 +141,61 @@ def get_resource_group(cluster):
 
 def process_cluster(cluster, mc):
     print(".", end="")
+
     # replicas per master is not reported by api for basic and standard tiers and for premium with default of one replica
     replicas_per_master = {
         'Basic': 0,
         'Standard' : 1,
-        'Premium': cluster.replicas_per_master or 1
-    }[cluster.sku.name]
-
-    cluster_shard_count = cluster.shard_count or 1 # api returns empty string if shard count is 1
-
-    non_metrics = [
-        get_resource_group(cluster),
-        cluster.location,
-        cluster.name,
-        f"{cluster.sku.family}{cluster.sku.capacity}",
-        f"{cluster.sku.name}",
-        replicas_per_master,
-        cluster_shard_count
-    ]
+        'Premium': getattr(cluster, 'replicas_per_master', 0) or 1,
+        'Enterprise_E1': 1,
+        'Enterprise_E5': 1,
+        'Enterprise_E10': 1,
+        'Enterprise_E20': 1,
+        'Enterprise_E50': 1,
+        'Enterprise_E100': 1,
+        'Enterprise_E200': 1,
+        'Enterprise_E400': 1
+    }.get(cluster.sku.name)
 
     cluster_rows = []
 
-    for shard_id in range(cluster_shard_count):
-        shard_ops_metrics = round(get_max_metrics(mc, cluster.id, f"operationspersecond{shard_id}"), 0)
-        shard_memory_metrics = round(get_max_metrics(mc, cluster.id, f"usedmemory{shard_id}") / 1024 / 1024, 2) #bytes to megabytes
-        shard_connection_metrics = get_max_metrics(mc, cluster.id, f"connectedclients{shard_id}")
-        cluster_rows.append(non_metrics + [shard_id, shard_ops_metrics, shard_memory_metrics, shard_connection_metrics])    
+    if cluster.type == 'Microsoft.Cache/redisEnterprise' and not cluster.sku.name.startswith('GeneralPurpose_G3'):
+        cluster_info = lookup_enterprise_sku_capcity(cluster.sku.name, cluster.sku.capacity)
+        cluster_shard_count = 1
+
+        non_metrics = [
+            get_resource_group(cluster),
+            cluster.location,
+            cluster.name,
+            f"{cluster.sku.capacity}",
+            f"{cluster.sku.name.rsplit('_', 1)[0]}",
+            replicas_per_master,
+            cluster_info['MasterShards']
+        ]
+
+        shard_ops_metrics = round(get_max_metrics(mc, cluster.id, f"operationspersecond"), 0)
+        shard_memory_metrics = round(get_max_metrics(mc, cluster.id, f"usedmemory") / 1024 / 1024, 2) #bytes to megabytes
+        shard_connection_metrics = get_max_metrics(mc, cluster.id, f"connectedclients")
+        cluster_rows.append(non_metrics + [0, shard_ops_metrics, shard_memory_metrics, shard_connection_metrics])  
+
+    if cluster.type == 'Microsoft.Cache/Redis':
+        cluster_shard_count = cluster.shard_count or 1 # api returns empty string if shard count is 1
+
+        non_metrics = [
+            get_resource_group(cluster),
+            cluster.location,
+            cluster.name,
+            f"{cluster.sku.family}{cluster.sku.capacity}",
+            f"{cluster.sku.name}",
+            replicas_per_master,
+            cluster_shard_count
+        ]
+
+        for shard_id in range(cluster_shard_count):
+            shard_ops_metrics = round(get_max_metrics(mc, cluster.id, f"operationspersecond{shard_id}"), 0)
+            shard_memory_metrics = round(get_max_metrics(mc, cluster.id, f"usedmemory{shard_id}") / 1024 / 1024, 2) #bytes to megabytes
+            shard_connection_metrics = get_max_metrics(mc, cluster.id, f"connectedclients{shard_id}")
+            cluster_rows.append(non_metrics + [shard_id, shard_ops_metrics, shard_memory_metrics, shard_connection_metrics])   
 
     return cluster_rows
 
@@ -135,9 +210,17 @@ def get_subscription_info(credential):
             SubscriptionClient(credential=credential).subscriptions.list()]
 
 
-def list_clusters(credential, subscription_id):
+def list_clusters(credential, subscription_id, pullAcre):
     print(f"Gathering cluster information for subscription {subscription_id}")
-    return RedisManagementClient(credential, subscription_id).redis.list()
+
+    oss_clusters = list(RedisManagementClient(credential, subscription_id).redis.list())
+    
+    enterprise_clusters = []
+
+    if pullAcre:
+        enterprise_clusters = list(RedisEnterpriseManagementClient(credential, subscription_id).redis_enterprise.list())
+
+    return oss_clusters, enterprise_clusters
 
 
 def main():
@@ -145,14 +228,20 @@ def main():
     parser.add_argument("-d", "--out-dir", dest="outDir", default=".",
                         help="directory to write the results in",
                         metavar="PATH")
+    
+    parser.add_argument("-e", "--pullAcre", action='store_true', help='Pull acre clusters')
+
     args = parser.parse_args()
     output_file_path = Path(args.outDir) / "AzureStats.xlsx"
 
+    tenant_id = os.getenv('AZURE_TENANT_ID')  # Set this environment variable
+
     azure_credential = DefaultAzureCredential()
-    
+
     metrics = [[sub_info[0]] + shard_stats
                for sub_info in get_subscription_info(azure_credential)
-               for cluster in list_clusters(azure_credential, sub_info[0])
+               for oss_clusters, enterprise_clusters in [list_clusters(azure_credential, sub_info[0], args.pullAcre)]
+               for cluster in oss_clusters + enterprise_clusters
                for shard_stats in process_cluster(cluster, sub_info[1])]
 
     df = pd.DataFrame(metrics, columns=["Subscription ID",
