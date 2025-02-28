@@ -11,7 +11,7 @@ import argparse
 import os
 
 # The measurement collection period in days.
-METRIC_COLLECTION_PERIOD_DAYS = 7
+METRIC_COLLECTION_PERIOD_DAYS = 90
 
 # The aggregation period
 # (see https://en.wikipedia.org/wiki/ISO_8601#Durations )
