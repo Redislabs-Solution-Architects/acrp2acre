@@ -177,8 +177,8 @@ def process_cluster(cluster, mc):
             get_resource_group(cluster),
             cluster.location,
             cluster.name,
-            f"{cluster.sku.capacity}",
-            f"{cluster.sku.name}",
+            f"{cluster.sku.name.split('_')[-1]}-Capacity{cluster.sku.capacity}",
+            f"{cluster.sku.name.rsplit('_', 1)[0]}",
             replicas_per_master,
             cluster_info['MasterShards']
         ]
