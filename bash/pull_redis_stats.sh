@@ -83,7 +83,7 @@ replicas_per_master_oss() {
 # Output header
 # -----------------------------
 {
-  echo "Subscription ID,Resource Group,Region,DB Name,SKU Capacity,SKU Name,Replicas per Master,Shard Count,Shard Number,Avg Ops/Sec,Used Memory (MB),Max Total Connections"
+  echo "Subscription ID,Resource Group,Region,DB Name,SKU Capacity,SKU Name,Replicas per Master,Shard Count,Shard Number,Max Ops/Sec,Used Memory (MB),Max Total Connections"
 } > "$OUT"
 
 # -----------------------------
