@@ -62,7 +62,7 @@ When complete, you will see: Wrote AzureStats.csv
 - Replicas per Master
 - Shard Count
 - Shard Number
-- Avg Ops/Sec
+- Max Ops/Sec
 - Used Memory (MB)
 - Max Total Connections
 
